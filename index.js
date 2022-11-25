@@ -110,6 +110,13 @@ async function run(){
             const result = await sellerItemsCollection.insertOne(product);
             res.send(result)
         })
+
+        app.get('/addProducts', verifyJwt, async(req,res)=>{
+            const email = req.query.email;
+            const query = {email: email};
+            const products = await sellerItemsCollection.find(query).toArray()
+            res.send(products);
+        })
     }
 
     finally{
