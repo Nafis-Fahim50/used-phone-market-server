@@ -17,7 +17,6 @@ const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology:
 
 function verifyJwt (req, res, next){
     const authHeader = req.headers.authorization;
-    console.log(authHeader);
     if(!authHeader){
         return res.status(401).send('unauthorized access')
     }
@@ -37,6 +36,15 @@ async function run(){
         const productCollection = client.db('resaleMarket').collection('products');
         const bookingCollection = client.db('resaleMarket').collection('bookings');
         const userCollection = client.db('resaleMarket').collection('users');
+
+        const verifySeller = async (req, res, next) =>{
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail }
+            const user = await userCollection.findOne(query);
+            if(user.role !== 'seller'){
+                return res.status(403).send('Forbidden Access')
+            }
+        }
 
         app.get('/categories', async(req, res)=>{
             const query = {};
@@ -88,7 +96,15 @@ async function run(){
             }
             res.status(403).send({accessToken: ''})
         })
+
+        app.get('/users/seller/:email', async(req,res)=>{
+            const email = req.params.email;
+            const query = {email}
+            const user = await userCollection.findOne(query);
+            res.send({isSeller: user?.role === 'seller'})
+        })
     }
+
     finally{
 
     }
