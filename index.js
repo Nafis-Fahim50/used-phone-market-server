@@ -36,6 +36,7 @@ async function run(){
         const productCollection = client.db('resaleMarket').collection('products');
         const bookingCollection = client.db('resaleMarket').collection('bookings');
         const userCollection = client.db('resaleMarket').collection('users');
+        const sellerItemsCollection = client.db('resaleMarket').collection('sellerProducts');
 
         const verifySeller = async (req, res, next) =>{
             const decodedEmail = req.decoded.email;
@@ -102,6 +103,12 @@ async function run(){
             const query = {email}
             const user = await userCollection.findOne(query);
             res.send({isSeller: user?.role === 'seller'})
+        })
+
+        app.post('/addProducts', async(req, res) =>{
+            const product = req.body;
+            const result = await sellerItemsCollection.insertOne(product);
+            res.send(result)
         })
     }
 
