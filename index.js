@@ -36,7 +36,6 @@ async function run(){
         const productCollection = client.db('resaleMarket').collection('products');
         const bookingCollection = client.db('resaleMarket').collection('bookings');
         const userCollection = client.db('resaleMarket').collection('users');
-        const sellerItemsCollection = client.db('resaleMarket').collection('sellerProducts');
 
         const verifySeller = async (req, res, next) =>{
             const decodedEmail = req.decoded.email;
@@ -47,6 +46,16 @@ async function run(){
             }
             next();
         }
+
+       const verifyAdmin = async (req, res, next) =>{
+            const decodedEmail = req.decoded.email;
+            const query = { email: decodedEmail };
+            const user = await userCollection.findOne(query)
+            if(user.role !== 'admin'){
+                return res.status(403).send('forbidden access')
+            }
+            next();
+       }
 
         app.get('/categories', async(req, res)=>{
             const query = {};
@@ -105,14 +114,22 @@ async function run(){
             const user = await userCollection.findOne(query);
             res.send({isSeller: user?.role === 'seller'})
         })
-    
-        app.post('/addProducts', async(req, res) =>{
+
+        app.get('/users/admin/:email', async(req,res)=>{
+            const email = req.params.email;
+            const query = {email}
+            const user = await userCollection.findOne(query);
+            res.send({isAdmin: user?.role === 'admin'})
+        })
+        
+
+        app.post('/addProducts', verifyJwt, verifySeller, async(req, res) =>{
             const product = req.body;
             const result = await productCollection.insertOne(product);
             res.send(result)
         })
 
-        app.get('/addProducts', verifyJwt,verifySeller, async(req,res)=>{
+        app.get('/addProducts', async(req,res)=>{
             const email = req.query.email;
             const query = {email: email};
             const products = await productCollection.find(query).toArray()
