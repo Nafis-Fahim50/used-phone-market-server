@@ -103,6 +103,14 @@ async function run(){
             res.send(seller);
         })
 
+        app.get('/allBuyers', verifyJwt, verifyAdmin, async(req, res) =>{
+            const query = {
+                role: 'buyer'
+            }
+            const buyer = await userCollection.find(query).toArray()
+            res.send(buyer);
+        })
+
         app.get('/jwt', async(req, res) =>{
             const email = req.query.email;
             const query = {
@@ -137,7 +145,7 @@ async function run(){
             res.send(result)
         })
 
-        app.get('/addProducts', async(req,res)=>{
+        app.get('/addProducts', verifyJwt, verifySeller, async(req,res)=>{
             const email = req.query.email;
             const query = {email: email};
             const products = await productCollection.find(query).toArray()
