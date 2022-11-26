@@ -45,6 +45,7 @@ async function run(){
             if(user.role !== 'seller'){
                 return res.status(403).send('Forbidden Access')
             }
+            next();
         }
 
         app.get('/categories', async(req, res)=>{
@@ -104,17 +105,17 @@ async function run(){
             const user = await userCollection.findOne(query);
             res.send({isSeller: user?.role === 'seller'})
         })
-
+    
         app.post('/addProducts', async(req, res) =>{
             const product = req.body;
-            const result = await sellerItemsCollection.insertOne(product);
+            const result = await productCollection.insertOne(product);
             res.send(result)
         })
 
-        app.get('/addProducts', verifyJwt, async(req,res)=>{
+        app.get('/addProducts', verifyJwt,verifySeller, async(req,res)=>{
             const email = req.query.email;
             const query = {email: email};
-            const products = await sellerItemsCollection.find(query).toArray()
+            const products = await productCollection.find(query).toArray()
             res.send(products);
         })
     }
