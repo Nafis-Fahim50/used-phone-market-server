@@ -103,6 +103,13 @@ async function run(){
             res.send(seller);
         })
 
+        app.delete('/allSellers/:id', verifyJwt, verifyAdmin, async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await userCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         app.get('/allBuyers', verifyJwt, verifyAdmin, async(req, res) =>{
             const query = {
                 role: 'buyer'
