@@ -100,6 +100,13 @@ async function run(){
             res.send(product)
         })
 
+        app.delete('/reportedProducts/:id', verifyJwt, verifyAdmin, async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const result = await productCollection.deleteOne(filter);
+            res.send(result);
+        })
+
         app.put('/products/:id',  async (req, res)=>{
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
