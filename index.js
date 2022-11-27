@@ -116,7 +116,7 @@ async function run(){
         })
 
         // delete seller 
-        
+
         app.delete('/allSellers/:id', verifyJwt, verifyAdmin, async(req, res)=>{
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
@@ -183,6 +183,13 @@ async function run(){
             const query = {email: email};
             const products = await productCollection.find(query).toArray()
             res.send(products);
+        })
+
+        app.delete('/addProducts/:id', verifyJwt, verifySeller, async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) }
+            const result = await productCollection.deleteOne(filter)
+            res.send(result);
         })
 
 
