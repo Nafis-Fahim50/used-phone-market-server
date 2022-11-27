@@ -3,6 +3,8 @@ const cors = require('cors');
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
+const { default: Stripe } = require('stripe');
+const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 const app = express();
 
@@ -36,6 +38,7 @@ async function run(){
         const productCollection = client.db('resaleMarket').collection('products');
         const bookingCollection = client.db('resaleMarket').collection('bookings');
         const userCollection = client.db('resaleMarket').collection('users');
+        const paymentCollection = client.db('resaleMarket').collection('payments');
 
         const verifySeller = async (req, res, next) =>{
             const decodedEmail = req.decoded.email;
@@ -102,6 +105,8 @@ async function run(){
             res.send(result);
         })
 
+        // get all seller 
+
         app.get('/allSellers', verifyJwt, verifyAdmin, async(req, res) =>{
             const query = {
                 role: 'seller'
@@ -110,12 +115,16 @@ async function run(){
             res.send(seller);
         })
 
+        // delete seller 
+        
         app.delete('/allSellers/:id', verifyJwt, verifyAdmin, async(req, res)=>{
             const id = req.params.id;
             const filter = { _id: ObjectId(id) };
             const result = await userCollection.deleteOne(filter);
             res.send(result);
         })
+
+        // get all buyers 
 
         app.get('/allBuyers', verifyJwt, verifyAdmin, async(req, res) =>{
             const query = {
@@ -131,6 +140,8 @@ async function run(){
             const result = await userCollection.deleteOne(filter);
             res.send(result);
         })
+
+        // implemnet jwt 
 
         app.get('/jwt', async(req, res) =>{
             const email = req.query.email;
@@ -159,6 +170,7 @@ async function run(){
             res.send({isAdmin: user?.role === 'admin'})
         })
         
+        // Product added by seller 
 
         app.post('/addProducts', verifyJwt, verifySeller, async(req, res) =>{
             const product = req.body;
@@ -171,6 +183,40 @@ async function run(){
             const query = {email: email};
             const products = await productCollection.find(query).toArray()
             res.send(products);
+        })
+
+
+        // Payment 
+        app.post('/create-payment-intent', async(req,res)=>{
+            const booking = req.body;
+            const price = booking.price;
+            const amount = price * 100;
+
+            const paymentIntent = await stripe.paymentIntents.create({
+                currency : 'usd',
+                amount : amount,
+                "payment_method_types": [
+                    "card"
+                  ],
+            })
+            res.send({
+                clientSecret: paymentIntent.client_secret,
+              });
+        })
+
+        app.post('/payments', async(req,res)=>{
+            const payment = req.body;
+            const result = await paymentCollection.insertOne(payment);
+            const id = payment.bookingId;
+            const filter = {_id: ObjectId(id)}
+            const updateDoc = {
+                $set:{
+                    paid:true,
+                    transationId: payment.transationId
+                }
+            }
+            const updateResult = await bookingCollection.updateOne(filter,updateDoc);
+            res.send(result);
         })
 
         
