@@ -75,6 +75,13 @@ async function run(){
             res.send(phone_collection);
         })
 
+        app.get('/products/:id',async(req, res)=>{
+            const id = req.params.id;
+            const query = { _id: ObjectId(id) };
+            const products = await productCollection.find(query).toArray()
+            res.send(products);
+        })
+
         app.post('/bookings', async(req,res)=>{
             const booking = req.body;
             const result = await bookingCollection.insertOne(booking);
@@ -113,6 +120,18 @@ async function run(){
             }
             const seller = await userCollection.find(query).toArray()
             res.send(seller);
+        })
+
+        app.put('/allSellers/:id', verifyJwt, verifyAdmin, async(req, res)=>{
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set:{
+                    verified: 'true'
+                }
+            }
+            const result = await userCollection.updateOne(filter, updateDoc);
+            res.send(result);
         })
 
         // delete seller 
