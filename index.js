@@ -4,6 +4,7 @@ const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 require('dotenv').config();
 const jwt = require('jsonwebtoken');
 const { default: Stripe } = require('stripe');
+const { response } = require('express');
 const stripe = require('stripe')(process.env.STRIPE_KEY)
 
 const app = express();
@@ -40,16 +41,7 @@ async function run(){
         const userCollection = client.db('resaleMarket').collection('users');
         const paymentCollection = client.db('resaleMarket').collection('payments');
 
-        // const verifyBuyer = async (req, res, next) =>{
-        //     const decodedEmail = req.decoded.email;
-        //     const query = { email: decodedEmail }
-        //     const user = await userCollection.findOne(query);
-        //     if(user.role !== 'buyer'){
-        //         return res.status(403).send('Forbidden Access')
-        //     }
-        //     next();
-        // }
-
+      
         const verifySeller = async (req, res, next) =>{
             const decodedEmail = req.decoded.email;
             const query = { email: decodedEmail }
@@ -166,7 +158,9 @@ async function run(){
                 email: email
             }
             const verifySeller = await userCollection.findOne(query);
-            res.send(verifySeller);
+            if(verifySeller){
+                res.send(verifySeller);
+            }
         })
 
         app.put('/allSellers/:id', verifyJwt, verifyAdmin, async(req, res)=>{
@@ -297,9 +291,7 @@ async function run(){
             }
             const updateResult = await bookingCollection.updateOne(filter,updateDoc);
             res.send(result);
-        })
-
-        
+        }) 
     }
 
     finally{
